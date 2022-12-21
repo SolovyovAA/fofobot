@@ -1,4 +1,3 @@
-import config
 import sqlite3
 
 class DBWorker:

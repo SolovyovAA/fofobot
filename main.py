@@ -8,6 +8,7 @@ bot = telebot.TeleBot(config.TOKEN)
 
 worker = db_worker.DBWorker(config.DATABASE_PATH + config.DATABASE_NAME)
 
+
 @bot.message_handler(commands=['help'])
 def help_command(message):
     keyboard = telebot.types.InlineKeyboardMarkup()
