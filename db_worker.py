@@ -15,7 +15,7 @@ class DBWorker:
 
     def userExist(self, id: int ):
         exist = self.cursor.execute(f'SELECT * FROM Users WHERE user_id={id}').fetchone()
-        if len( exist ) == 0:
+        if exist is None:
             return False
         else:
             return True
