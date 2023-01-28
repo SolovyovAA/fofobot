@@ -53,10 +53,15 @@ def send_welcome(message):
         worker.writeToDatabase(us_id, username, fullname, "", False)
 
 
-@bot.message_handler(commands=['getnude'])
-def get_nude(message):
-    bot.send_photo(message.chat.id, 'https://www.meme-arsenal.com/memes/906057dd785388a0fa893ca85dc9b6b5.jpg');
-    # bot.reply_to(message, f'Я бот. Приятно познакомиться, {message.from_user.first_name}')
+@bot.message_handler(commands=['links'])
+def get_links(message):
+    links = telebot.types.InlineKeyboardMarkup()
+    links.add(telebot.types.InlineKeyboardButton(text='VK', url='https://vk.com/fofodmd'))
+    links.add(telebot.types.InlineKeyboardButton(text='Telegram', url='https://t.me/fo_fo_dmd'))
+    links.add(telebot.types.InlineKeyboardButton(text='Telegram Чат', url='https://t.me/+NZ3ioiHi2_E4ZmZi'))
+    links.add(telebot.types.InlineKeyboardButton(text='Instagram*', url='https://www.instagram.com/focus_club_dmd/'))
+
+    bot.send_message(message.chat.id, text='Наши социальные сети:', reply_markup=links)
 
 
 # Обрабатываем команду от администратора
