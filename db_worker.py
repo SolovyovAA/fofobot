@@ -8,8 +8,15 @@ class DBWorker:
         self.conn = sqlite3.connect(self.pathToDb, check_same_thread=False)
         self.cursor = self.conn.cursor()
 
-    def writeToDatabase(self, nickname: str, name: str, bday: str, congratulate: bool):
-        self.cursor.execute('INSERT INTO Users (nickname, name, bday, congratulate) VALUES (?, ?, ?, ?)',
-                            (nickname, name, bday, congratulate))
+    def writeToDatabase(self, id: int, nickname: str, name: str, bday: str, congratulate: bool):
+        self.cursor.execute('INSERT INTO Users (user_id, nickname, name, bday, congratulate) VALUES (?, ?, ?, ?, ?)',
+                            (id, nickname, name, bday, congratulate))
         self.conn.commit()
+
+    def userExist(self, id: int ):
+        exist = self.cursor.execute(f'SELECT * FROM Users WHERE user_id={id}').fetchone()
+        if len( exist ) == 0:
+            return False
+        else:
+            return True
 
