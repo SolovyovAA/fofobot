@@ -72,7 +72,7 @@ def get_text_messages(message):
             bot.send_message(message.from_user.id, 'Привет, %s!' % (username))
         else:
             bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % (username))
-            worker.writeToDatabase(us_id, username, f'{us_name} {us_sname}', "", False)
+            worker.writeToDatabase(us_id, username, fullname, "", False)
         # bot.send_message(1120038921,'Оповещение типо =)')
 
 
