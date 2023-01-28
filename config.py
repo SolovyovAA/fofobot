@@ -1,5 +1,23 @@
-TOKEN = "5905024855:AAHvAdGXyTaxaj-67vIOBy87tA-Ae-OtslQ"
-CHANNEL_NAME = "@fo_fo_dmd"
+import json
 
-DATABASE_NAME = "users_bday.db"
-DATABASE_PATH = 'db/' 
+
+class Config:
+    def __init__(self):
+        with open('config.json', 'r') as json_file:
+            config_json = json_file.read()
+            json_data = json.loads(config_json)
+            self.TOKEN = json_data["TOKEN"]
+            self.CHANNEL_NAME = json_data["CHANNEL_NAME"]
+            self.DATABASE_NAME = json_data["DATABASE_NAME"]
+            self.DATABASE_PATH = json_data["DATABASE_PATH"]
+            json_file.close()
+
+
+    def getToken(self):
+        return self.TOKEN
+
+    def getChannelName(self):
+        return self.CHANNEL_NAME
+
+    def getDatabasePath(self):
+        return self.DATABASE_PATH + self.DATABASE_NAME

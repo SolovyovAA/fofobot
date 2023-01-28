@@ -4,10 +4,21 @@ import config
 
 import db_worker
 
-bot = telebot.TeleBot(config.TOKEN)
+conf = config.Config()
 
-worker = db_worker.DBWorker(config.DATABASE_PATH + config.DATABASE_NAME)
+bot = telebot.TeleBot(conf.getToken())
+worker = db_worker.DBWorker(conf.getDatabasePath())
 
+@bot.message_handler(content_types=['text'])
+def get_text_messages(message):
+    if message.text.lower() == 'привет':
+        bot.send_message(message.from_user.id, 'Привет! Ваше имя добавленно в базу данных!')
+        us_id = message.from_user.id
+        us_name = message.from_user.first_name
+        us_sname = message.from_user.last_name
+        username = message.from_user.username
+
+        worker.writeToDatabase(user_id=us_id, user_name=us_name, user_surname=us_sname, username=username)
 
 @bot.message_handler(commands=['help'])
 def help_command(message):
