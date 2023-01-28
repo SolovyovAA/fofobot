@@ -21,18 +21,36 @@ def help_command(message):
             'Связаться с разработчиком', url='telegram.me/pihost'
         )
     )
-    bot.send_message(
+    bot.send_photo(
         message.chat.id,
-        '1) Бот нихера пока не умеет.\n' +
-        '2) Хочешь начать? отправь /start или /reg\n' +
-        '3) Для получения сюрприза отправь /getnude.',
+        "https://sun9-88.userapi.com/impg/B-eZpakYBL7JiCP3FJeuBb5GUFDKp7p_2zvSHQ/P3c5rZghzag.jpg?size=1280x1280"
+        "&quality=95&sign=49718e812dadda3bfa16dfa16c520412&type=album",
+        "Список команд доступен через меню\n" 
+        "Чтобы посмотреть информацию о себе отправь - /show\n" 
+        "Для получения списка наших социальных сетей отправь - /links\n"
+        "Хочешь узнать о нас подробнее? - /about\n",
         reply_markup=keyboard
     )
 
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, f'Я бот. Приятно познакомиться, {message.from_user.first_name}')
+    us_id = message.from_user.id
+    us_name = message.from_user.first_name
+    us_sname = message.from_user.last_name
+    username = message.from_user.username
+
+    fullname = ''
+    fullname += us_name if us_name is not None else ''  # Применение тернарного оператора
+
+    if us_sname is not None:
+        fullname += ' ' + us_sname
+
+    if worker.userExist(us_id):
+        bot.send_message(message.from_user.id, 'Привет, %s!' % (username))
+    else:
+        bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % (username))
+        worker.writeToDatabase(us_id, username, fullname, "", False)
 
 
 @bot.message_handler(commands=['getnude'])
@@ -52,6 +70,7 @@ def admin_rep(message):
 @bot.message_handler(commands=['admin'])
 def not_admin(message):
     bot.send_message(message.chat.id, "You are not allowed to use this command")
+    # bot.send_message(95597235, 'Оповещение типо =)')
 
 
 @bot.message_handler(content_types=['text'])
@@ -73,15 +92,6 @@ def get_text_messages(message):
         else:
             bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % (username))
             worker.writeToDatabase(us_id, username, fullname, "", False)
-        # bot.send_message(1120038921,'Оповещение типо =)')
-
-
-@bot.message_handler(content_types=['text'])
-def get_text_messages(message):
-    if message.text.lower() == 'привет':
-        bot.send_message(message.from_user.id, 'Привет!')
-    else:
-        bot.send_message(message.from_user.id, 'Не понимаю, что это значит.')
 
 
 # Регистрируем фильтр
