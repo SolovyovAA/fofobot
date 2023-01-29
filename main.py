@@ -53,6 +53,7 @@ def send_welcome(message):
         worker.writeToDatabase(us_id, username, fullname, "", False)
 
 
+# Обрабатываем запрос ссылок
 @bot.message_handler(commands=['links'])
 def get_links(message):
     links = telebot.types.InlineKeyboardMarkup()
@@ -62,6 +63,7 @@ def get_links(message):
     links.add(telebot.types.InlineKeyboardButton(text='Instagram*', url='https://www.instagram.com/focus_club_dmd/'))
 
     bot.send_message(message.chat.id, text='Наши социальные сети:', reply_markup=links)
+    bot.send_message(message.chat.id, text="*Запрещенная организация на территории РФ")
 
 
 # Обрабатываем команду от администратора
@@ -74,8 +76,7 @@ def admin_rep(message):
 # Обрабатываем команду от пользователя
 @bot.message_handler(commands=['admin'])
 def not_admin(message):
-    bot.send_message(message.chat.id, "You are not allowed to use this command")
-    # bot.send_message(95597235, 'Оповещение типо =)')
+    bot.send_message(message.chat.id, "Прости, но у тебя нет прав на выполнение этой команды =)")
 
 
 @bot.message_handler(content_types=['text'])
