@@ -24,6 +24,27 @@ class User:
         self.congratulate = None
 
 
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    us_id = message.from_user.id
+    us_name = message.from_user.first_name
+    us_sname = message.from_user.last_name
+    username = message.from_user.username
+
+    fullname = ''
+    fullname += us_name if us_name is not None else ''  # Применение тернарного оператора
+
+    if us_sname is not None:
+        fullname += ' ' + us_sname
+
+    if worker.userExist(us_id):
+        bot.send_message(message.from_user.id, 'Привет, %s!' % (username))
+    else:
+        bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % (username))
+        worker.writeToDatabase(us_id, username, fullname, "", False)
+
+
+# Обрабатываем запрос "помощи"
 @bot.message_handler(commands=['help'])
 def help_command(message):
     keyboard = telebot.types.InlineKeyboardMarkup()
@@ -44,24 +65,45 @@ def help_command(message):
     )
 
 
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
+# Обрабатываем запрос информации о клубе
+@bot.message_handler(commands=['about'])
+def about_command(message):
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    keyboard.add(
+        telebot.types.InlineKeyboardButton(
+            'Связаться с разработчиком', url='telegram.me/pihost'
+        )
+    )
+    bot.send_photo(
+        message.chat.id,
+        "https://sun9-88.userapi.com/impg/B-eZpakYBL7JiCP3FJeuBb5GUFDKp7p_2zvSHQ/P3c5rZghzag.jpg?size=1280x1280"
+        "&quality=95&sign=49718e812dadda3bfa16dfa16c520412&type=album",
+        "Список команд доступен через меню\n" 
+        "Чтобы посмотреть информацию о себе отправь - /show\n" 
+        "Для получения списка наших социальных сетей отправь - /links\n"
+        "Хочешь узнать о нас подробнее? - /about\n",
+        reply_markup=keyboard
+    )
+
+
+# Обрабатываем запрос информации о сохраненной информации об участнике
+@bot.message_handler(commands=['show'])
+def show_command(message):
     us_id = message.from_user.id
-    us_name = message.from_user.first_name
-    us_sname = message.from_user.last_name
     username = message.from_user.username
 
-    fullname = ''
-    fullname += us_name if us_name is not None else ''  # Применение тернарного оператора
-
-    if us_sname is not None:
-        fullname += ' ' + us_sname
-
     if worker.userExist(us_id):
-        bot.send_message(message.from_user.id, 'Привет, %s!' % (username))
+        # TODO: Запрос данных о пользователе
+        userData = worker.getUserData(us_id)
+        if userData:
+            dataMsg = f"Итак, что же мы передаем в __FBI Open Up__ о неком *{userData[0]}\n*" \
+                      f"Мы зовем тебя: *{userData[1]}*\n"\
+                      f"Дата рождения: *{userData[2] if len(userData[2])>0 else 'TOP SECRET'}*\n"\
+                      f"И что мы тебя *{ 'уже поздравляли в этом году' if userData[3] == True else 'еще не поздравляли в этом году.'}*"
+
+        bot.send_message(message.from_user.id, dataMsg, parse_mode='Markdown')
     else:
-        bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % (username))
-        worker.writeToDatabase(us_id, username, fullname, "", False)
+        bot.send_message(message.from_user.id, f'{username}, к сожалению, нам пока ничего о тебе неизвестно')
 
 
 # Обрабатываем запрос ссылок

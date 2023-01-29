@@ -20,3 +20,6 @@ class DBWorker:
         else:
             return True
 
+    def getUserData(self, id: int):
+        data = self.cursor.execute(f'SELECT nickname, name, bday, congratulate FROM Users WHERE user_id={id} LIMIT 1').fetchone()
+        return data
