@@ -37,9 +37,9 @@ def send_welcome(message):
         fullname += ' ' + us_sname
 
     if worker.userExist(us_id):
-        bot.send_message(message.from_user.id, 'Привет, %s!' % (username))
+        bot.send_message(message.from_user.id, 'Привет, %s!' % username)
     else:
-        bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % (username))
+        bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % username)
         worker.writeToDatabase(us_id, username, fullname, "", False)
 
 
@@ -94,6 +94,7 @@ def show_command(message):
     if worker.userExist(us_id):
         # TODO: Запрос данных о пользователе
         userData = worker.getUserData(us_id)
+        dataMsg = "Данные повреждены"
         if userData:
             dataMsg = f"Итак, что же мы передаем в __FBI Open Up__ о неком *{userData[0]}\n*" \
                       f"Мы зовем тебя: *{userData[1]}*\n"\
@@ -131,7 +132,7 @@ def admin_rep(message):
     bot.send_message(message.chat.id, "Что будем делать?", reply_markup=menu)
 
 
-@bot.callback_query_handler(func=lambda call:True)
+@bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     menu = telebot.types.InlineKeyboardMarkup()
     if call.data == "add_user_info":
@@ -139,7 +140,7 @@ def callback_inline(call):
         menu.add(telebot.types.InlineKeyboardButton(text="Нет", callback_data='add_with_forward_message'))
         menu.add(telebot.types.InlineKeyboardButton(text="Вернуться к упарвлению", callback_data="back_to_admin"))
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                              text="Занесение данных нового участника в БД.\n Известен ли ID участника?", reply_markup=menu)
+                              text="Занесение данных нового участника в БД.\nИзвестен ли ID участника?", reply_markup=menu)
     elif call.data == "add_with_id":
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text="Введите ID участника:", reply_markup=menu)
@@ -184,15 +185,17 @@ def process_add_id_step(message):
 
 def process_add_message_step(message):
     try:
-        # forward_date - поле
-        chat_id = message.chat.id
-        name = message.text
-        user.clear()
-        # user = uc.User(name)
-        # user_dict[chat_id] = user
-        msg = bot.reply_to(message, 'How old are you?')
-        # bot.register_next_step_handler(msg, process_age_step)
-    except Exception as e:
+        if message.forward_from:
+            user_data = message.forward_from
+            user.clear()
+            user.setId(user_data.id)
+            user.setName(user_data.full_name)
+            user.setNickname(user_data.username)
+            msg = bot.reply_to(message, 'Введите дату рождения участника? Формат: год-месяц-число (например, 1990-01-29)')
+            bot.register_next_step_handler(msg, process_add_bday_step)
+        else:
+            bot.reply_to(message, "К сожалению, пользователь скрыл свои данные. Попроси его написать нам")
+    except (Exception,):
         bot.reply_to(message, "Что-то пошло не так")
 
 
@@ -211,10 +214,12 @@ def process_add_nick_step(message):
 def process_add_bday_step(message):
     try:
         date = parser.parse(message.text)
-        user.setDate(date.date(), date.date() < datetime.datetime.now().date())
+        cong = date.date() < datetime.now().date()
+        user.setDate(date.date().strftime("%Y-%m-%d"), cong)
         bot.reply_to(message, 'Данные участника заполнены. Добавляем его в базу данных')
-        worker.writeToDatabase(user.getId(), user.getNickname(), user.getName(), user.getDate(), user.isCongratualted())
-        send_answer(message.chat.id, "Добавление завершено успешно")
+        worker.writeToDatabase(id=user.getId(), nickname=user.getNickname(), name=user.getName(),
+                               bday=user.getDate(), congratulate=user.isCongratulated())
+        send_answer(message.chat.id, "Добавление завершено успешно", None)
     except (Exception,):
         bot.reply_to(message, "Что-то пошло не так")
 
@@ -227,35 +232,18 @@ def not_admin(message):
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    if message.text.lower() == 'привет':
-        us_id = message.from_user.id
-        us_name = message.from_user.first_name
-        us_sname = message.from_user.last_name
-        username = message.from_user.username
-
-        fullname = ''
-        fullname += us_name if us_name is not None else ''  # Применение тернарного оператора
-
-        if us_sname is not None:
-            fullname += ' ' + us_sname
-
-        if worker.userExist(us_id):
-            bot.send_message(message.from_user.id, 'Привет, %s!' % (username))
-        else:
-            bot.send_message(message.from_user.id, 'Привет, %s! Ваше имя добавленно в базу данных!' % (username))
-            worker.writeToDatabase(us_id, username, fullname, "", False)
+    bot.send_message(message.from_user.id, 'Привет, %s!' % message.from_user.username)
+    # if message.text.lower() == 'привет':
 
 
 if __name__ == "__main__":
     # Регистрируем фильтр
     bot.add_custom_filter(custom_filters.ChatFilter())
 
-
     # Enable saving next step handlers to file "./.handlers-saves/step.save".
     # Delay=2 means that after any change in next step handlers (e.g. calling register_next_step_handler())
     # saving will happen after delay 2 seconds.
     # bot.enable_save_next_step_handlers(delay=2)
-
 
     # Load next_step_handlers from save file (default "./.handlers-saves/step.save")
     # WARNING It will work only if enable_save_next_step_handlers was called!
