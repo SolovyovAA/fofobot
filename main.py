@@ -1,27 +1,26 @@
+import datetime
+
 import telebot
 
 import config
 
 import db_worker
 
+import user_class
+
+from dateutil import parser
+
 from telebot import custom_filters
 
-user_dict = {}
+from datetime import datetime
+
+user = user_class.User()
 
 conf = config.Config()
 
 bot = telebot.TeleBot(conf.getToken())
 worker = db_worker.DBWorker(conf.getDatabasePath())
 worker.connectToDatabase()
-
-
-class User:
-    def __init__(self, user_id, nickname='', name=''):
-        self.id = user_id
-        self.nickname = nickname
-        self.name = name
-        self.date = None
-        self.congratulate = None
 
 
 @bot.message_handler(commands=['start'])
@@ -153,21 +152,32 @@ def callback_inline(call):
         admin_rep(call.message)
 
 
+def send_answer(chatid, message, menu):
+    if menu:
+        bot.send_message(chat_id=chatid, text=message, reply_markup=menu)
+    else:
+        bot.send_message(chat_id=chatid, text=message)
+
+
 def process_add_id_step(message):
     try:
         if message.text.isdigit():
             chat_id = message.chat.id
             user_id = int(message.text)
-            user = User(user_id)
-            user_dict[chat_id] = user
-            # TODO: Проверить, не существует ли такой участник уже в БД
-            msg = bot.reply_to(message, 'Введите имя участника?')
-            bot.register_next_step_handler(msg, process_add_name_step)
+            user.clear()
+            user.setId(user_id)
+
+            if worker.userExist(user_id):
+                menu = telebot.types.InlineKeyboardMarkup()
+                menu.add(telebot.types.InlineKeyboardButton(text="Вернуться в начало", callback_data="add_user_info"))
+                send_answer(chat_id, "Такой пользователь уже существует", menu)
+            else:
+                msg = bot.reply_to(message, 'Введите имя участника?')
+                bot.register_next_step_handler(msg, process_add_name_step)
         else:
             menu = telebot.types.InlineKeyboardMarkup()
             menu.add(telebot.types.InlineKeyboardButton(text="Вернуться в начало", callback_data="add_user_info"))
-            bot.send_message(chat_id=message.chat.id,
-                                  text="Идентификатор участника должен быть числом", reply_markup=menu)
+            bot.send_message(chat_id=message.chat.id, text="Идентификатор участника должен быть числом", reply_markup=menu)
     except (Exception,):
         bot.reply_to(message, "Что-то пошло не так")
 
@@ -177,8 +187,9 @@ def process_add_message_step(message):
         # forward_date - поле
         chat_id = message.chat.id
         name = message.text
-        user = User(name)
-        user_dict[chat_id] = user
+        user.clear()
+        # user = uc.User(name)
+        # user_dict[chat_id] = user
         msg = bot.reply_to(message, 'How old are you?')
         # bot.register_next_step_handler(msg, process_age_step)
     except Exception as e:
@@ -186,8 +197,26 @@ def process_add_message_step(message):
 
 
 def process_add_name_step(message):
-    a = 1
+    user.setName(message.text)
+    msg = bot.reply_to(message, 'Введите никнейм участника?')
+    bot.register_next_step_handler(msg, process_add_nick_step)
 
+
+def process_add_nick_step(message):
+    user.setNickname(message.text)
+    msg = bot.reply_to(message, 'Введите дату рождения участника?')
+    bot.register_next_step_handler(msg, process_add_bday_step)
+
+
+def process_add_bday_step(message):
+    try:
+        date = parser.parse(message.text)
+        user.setDate(date.date(), date.date() < datetime.datetime.now().date())
+        bot.reply_to(message, 'Данные участника заполнены. Добавляем его в базу данных')
+        worker.writeToDatabase(user.getId(), user.getNickname(), user.getName(), user.getDate(), user.isCongratualted())
+        send_answer(message.chat.id, "Добавление завершено успешно")
+    except (Exception,):
+        bot.reply_to(message, "Что-то пошло не так")
 
 
 # Обрабатываем команду от участника
