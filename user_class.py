@@ -3,8 +3,8 @@ class User:
         self.id = user_id
         self.nickname = nickname
         self.name = name
-        self.date = None
-        self.congratulate = None
+        self.date = ""
+        self.congratulate = False
 
     def setId(self, user_id: int):
         self.id = user_id
@@ -28,7 +28,7 @@ class User:
     def getName(self):
         return self.name
 
-    def getDate(self):
+    def getDate(self) -> str:
         return self.date
 
     def isCongratulated(self):
