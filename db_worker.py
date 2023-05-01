@@ -36,5 +36,13 @@ class DBWorker:
 
     def getTodayBdays(self, date: datetime):
         data = self.cursor.execute(
-            f'SELECT nickname, congratulate FROM Users WHERE bday LIKE \'%{date}\'').fetchall()
+            f'SELECT nickname, congratulate, user_id FROM Users WHERE bday LIKE \'%{date}\'').fetchall()
         return data
+
+    def getTodayBdaysUncong(self, date: datetime):
+        data = self.cursor.execute(
+            f'SELECT nickname, user_id FROM Users WHERE congratulate = 0 AND bday LIKE \'%{date}\'').fetchall()
+        return data
+
+    # def makeCongratulate(self, ids: list):
+    #     data = self.cursor.execute()
