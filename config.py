@@ -8,6 +8,7 @@ class Config:
             json_data = json.loads(config_json)
             self.TOKEN = json_data["TOKEN"]
             self.CHANNEL_NAME = json_data["CHANNEL_NAME"]
+            self.ADMIN_GROUP_ID = json_data["ADMIN_GROUP_ID"]
             self.DATABASE_NAME = json_data["DATABASE_NAME"]
             self.DATABASE_PATH = json_data["DATABASE_PATH"]
             json_file.close()
@@ -21,3 +22,6 @@ class Config:
 
     def getDatabasePath(self):
         return self.DATABASE_PATH + self.DATABASE_NAME
+
+    def getAdminGroupId(self):
+        return self.ADMIN_GROUP_ID
