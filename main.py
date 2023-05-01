@@ -22,6 +22,14 @@ bot = telebot.TeleBot(conf.getToken())
 worker = db_worker.DBWorker(conf.getDatabasePath())
 worker.connectToDatabase()
 
+smiles = {
+    'done': u'\U00002705',
+    'not_done': u'\U0000274C',
+    'thumbs_up': u'\U0001F44D',
+    'cake': u'\U0001F382',
+    'present': u'\U0001F381',
+    'popper': u'\U0001F389'
+}
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -128,8 +136,70 @@ def admin_rep(message):
     menu.add(telebot.types.InlineKeyboardButton(text="Изменить данные участника", callback_data='edit_user_info'))
     menu.add(telebot.types.InlineKeyboardButton(text="Удалить данные участника", callback_data='delete_user_info'))
     menu.add(telebot.types.InlineKeyboardButton(text="Создать встречу", callback_data='make_event'))
+    menu.add(telebot.types.InlineKeyboardButton(text="Проверить дни рождения", callback_data='check_bday'))
 
     bot.send_message(message.chat.id, "Что будем делать?", reply_markup=menu)
+
+
+def make_event(message):
+    a = 1
+
+
+def process_congratulate_everyone(message):
+    try:
+        text = ""
+        bdays = worker.getTodayBdaysUncong(datetime.now().date().strftime("%m-%d"))
+        if bdays:
+            cong_ids = list()
+            if len(bdays) > 1:
+                text = f"Сегодня день рождения сразу у несокльких наших участников!" \
+                       f"Поздравляем:"
+                for person in bdays:
+                    text += f"\n@{person[0]}"
+                    cong_ids.append(person[1])
+
+                text += f"\n\nС Днем Рождения {smiles['present']}{smiles['popper']} " \
+                        f"\nЖелаем вам крепкого здоровья, счастья, благополучия, только ровных дорог, пусть все у вас будет в жизни."
+            else:
+                cong_ids.append(bdays[0][1])
+                text = f"Сегодня день рождения у @{bdays[0][0]}! {smiles['cake']}" \
+                       f"\nС Днем Рождения {smiles['present']}{smiles['popper']} " \
+                       f"\nЖелаем тебе крепкого здоровья, счастья, благополучия, только ровных дорог, пусть все у тебя будет в жизни."
+
+            # try:
+                # worker.makeCongratulate(cong_ids)
+            # except (Exception,):
+                # bot.reply_to(message, "Произошла ошибка во время внесения изменений в БД")
+
+            done_text = f"Всех поздравили {smiles['thumbs_up']} (выполнено {message.from_user.username})"
+            send_answer(conf.getAdminGroupId(), text, None)
+            send_answer(message.chat.id, done_text, None)
+            if message.chat.id != conf.getAdminGroupId():
+                send_answer(conf.getAdminGroupId(), done_text, None)
+    except (Exception,):
+        bot.reply_to(message, "Что-то пошло не так")
+
+
+def check_bday(message):
+    # Получаем список дней рождений на сегодня (имя - поздравлен ли)
+    bdays = worker.getTodayBdays(datetime.now().date().strftime("%m-%d"))
+
+    text = "Сегодня дней рождений не найдено"
+    menu = telebot.types.InlineKeyboardMarkup()
+    if bdays:
+        text = "Дни рождения сегодня:"
+        for person in bdays:
+            text += f"\n@{person[0]} ({smiles['done'] + 'Поздравлен' if person[1] else smiles['not_done'] + 'Надо поздравить'})"
+        menu.add(telebot.types.InlineKeyboardButton(text="Поздравить всех", callback_data="congratulate_everyone"))
+
+    send_answer(conf.getAdminGroupId(), text, None)
+    send_answer(message.chat.id, text, menu if menu else None)
+
+
+    # Проверяем, если список пуст - выводим, что некого поздравлять
+    # Если список не пуст, то выводим списком всех именинников
+    # Если в списке 1 непоздравленный, то предлагаем поздравить
+    # Если в списке много непоздравленных, то предлагаем каждого отдельно (кнопками) или всех сразу
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -151,6 +221,12 @@ def callback_inline(call):
         bot.register_next_step_handler(call.message, process_add_message_step)
     elif call.data == "back_to_admin":
         admin_rep(call.message)
+    elif call.data == "make_event":
+        make_event(call.message)
+    elif call.data == "check_bday":
+        check_bday(call.message)
+    elif call.data == "congratulate_everyone":
+        process_congratulate_everyone(call.message)
 
 
 def send_answer(chatid, message, menu):
@@ -228,7 +304,7 @@ def process_add_bday_step(message):
 @bot.message_handler(commands=['admin'])
 def not_admin(message):
     bot.send_message(message.chat.id, f"Прости {message.from_user.username}, но у тебя нет прав на выполнение этой команды =)")
-
+    bot.send_message(chat_id=conf.getAdminGroupId(), text=f"Некий негодяй {message.from_user.username}(id: {message.from_user.id}) пытался зайти в админку")
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
