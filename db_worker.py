@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import datetime
+
 
 class DBWorker:
     def __init__(self, pathToDb):
@@ -31,3 +33,8 @@ class DBWorker:
             return False
         else:
             return True
+
+    def getTodayBdays(self, date: datetime):
+        data = self.cursor.execute(
+            f'SELECT nickname, congratulate FROM Users WHERE bday LIKE \'%{date}\'').fetchall()
+        return data
