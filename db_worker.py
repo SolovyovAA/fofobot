@@ -23,3 +23,11 @@ class DBWorker:
     def getUserData(self, id: int):
         data = self.cursor.execute(f'SELECT nickname, name, bday, congratulate FROM Users WHERE user_id={id} LIMIT 1').fetchone()
         return data
+
+    def isUserAdmin(self, id: int) -> bool:
+        data = self.cursor.execute(
+            f'SELECT user_id FROM Users WHERE user_id={id} AND admin = 1 LIMIT 1').fetchone()
+        if data is None:
+            return False
+        else:
+            return True
