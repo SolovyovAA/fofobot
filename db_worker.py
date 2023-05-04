@@ -44,5 +44,5 @@ class DBWorker:
             f'SELECT nickname, user_id FROM Users WHERE congratulate = 0 AND bday LIKE \'%{date}\'').fetchall()
         return data
 
-    # def makeCongratulate(self, ids: list):
-    #     data = self.cursor.execute()
+    def makeCongratulate(self, ids: list):
+        data = self.cursor.execute()

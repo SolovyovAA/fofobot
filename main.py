@@ -100,7 +100,6 @@ def show_command(message):
     username = message.from_user.username
 
     if worker.userExist(us_id):
-        # TODO: Запрос данных о пользователе
         userData = worker.getUserData(us_id)
         dataMsg = "Данные повреждены"
         if userData:
@@ -128,17 +127,18 @@ def get_links(message):
 
 
 # Обрабатываем команду от администратора
-@bot.message_handler(chat_id=[95597235, 1120038921],  # chat_id проверяем, в списке ли идентификатор участника
+@bot.message_handler(func=lambda message: worker.isUserAdmin(message.from_user.id),#chat_id=[95597235, 1120038921],  # chat_id проверяем, в списке ли идентификатор участника
                      commands=['admin'])
 def admin_rep(message):
-    menu = telebot.types.InlineKeyboardMarkup()
-    menu.add(telebot.types.InlineKeyboardButton(text="Добавить данные участника", callback_data='add_user_info'))
-    menu.add(telebot.types.InlineKeyboardButton(text="Изменить данные участника", callback_data='edit_user_info'))
-    menu.add(telebot.types.InlineKeyboardButton(text="Удалить данные участника", callback_data='delete_user_info'))
-    menu.add(telebot.types.InlineKeyboardButton(text="Создать встречу", callback_data='make_event'))
-    menu.add(telebot.types.InlineKeyboardButton(text="Проверить дни рождения", callback_data='check_bday'))
+    # if worker.isUserAdmin(message.from_user.id):
+        menu = telebot.types.InlineKeyboardMarkup()
+        menu.add(telebot.types.InlineKeyboardButton(text="Добавить данные участника", callback_data='add_user_info'))
+        menu.add(telebot.types.InlineKeyboardButton(text="Изменить данные участника", callback_data='edit_user_info'))
+        menu.add(telebot.types.InlineKeyboardButton(text="Удалить данные участника", callback_data='delete_user_info'))
+        menu.add(telebot.types.InlineKeyboardButton(text="Создать встречу", callback_data='make_event'))
+        menu.add(telebot.types.InlineKeyboardButton(text="Проверить дни рождения", callback_data='check_bday'))
 
-    bot.send_message(message.chat.id, "Что будем делать?", reply_markup=menu)
+        bot.send_message(message.chat.id, "Что будем делать?", reply_markup=menu)
 
 
 def make_event(message):
@@ -166,10 +166,10 @@ def process_congratulate_everyone(message):
                        f"\nС Днем Рождения {smiles['present']}{smiles['popper']} " \
                        f"\nЖелаем тебе крепкого здоровья, счастья, благополучия, только ровных дорог, пусть все у тебя будет в жизни."
 
-            # try:
-                # worker.makeCongratulate(cong_ids)
-            # except (Exception,):
-                # bot.reply_to(message, "Произошла ошибка во время внесения изменений в БД")
+            try:
+                worker.makeCongratulate(cong_ids)
+            except (Exception,):
+                bot.reply_to(message, "Произошла ошибка во время внесения изменений в БД")
 
             done_text = f"Всех поздравили {smiles['thumbs_up']} (выполнено {message.from_user.username})"
             send_answer(conf.getAdminGroupId(), text, None)
@@ -308,7 +308,7 @@ def not_admin(message):
 
 @bot.message_handler(content_types=['text'])
 def get_text_messages(message):
-    bot.send_message(message.from_user.id, 'Привет, %s!' % message.from_user.username)
+    bot.send_message(message.chat.id, 'Привет, %s!' % message.from_user.username)
     # if message.text.lower() == 'привет':
 
 
