@@ -192,8 +192,11 @@ def check_bday(message):
             text += f"\n@{person[0]} ({smiles['done'] + 'Поздравлен' if person[1] else smiles['not_done'] + 'Надо поздравить'})"
         menu.add(telebot.types.InlineKeyboardButton(text="Поздравить всех", callback_data="congratulate_everyone"))
 
-    send_answer(conf.getAdminGroupId(), text, None)
-    send_answer(message.chat.id, text, menu if menu else None)
+    adminGroupId = conf.getAdminGroupId()
+
+    send_answer(adminGroupId, text, None)
+    if adminGroupId != message.chat.id:
+        send_answer(message.chat.id, text, menu if menu else None)
 
 
     # Проверяем, если список пуст - выводим, что некого поздравлять
