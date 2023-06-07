@@ -1,6 +1,7 @@
 *idea*
 *__*
 *venv*
+*.txt
 config.json*
 /db
 
